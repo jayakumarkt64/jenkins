@@ -1,0 +1,20 @@
+node{
+    def mhd=tool name:"maven"
+    stage('checkout code'){
+        git branch: 'development', credentialsId: 'git', url: 'https://github.com/jayakumarkt64/jenkins.git'
+    }
+    stage('build'){
+        sh "${mhd}/bin/mvn clean package"
+    }
+    stage('sonarReport'){
+        sh "${mhd}/bin/mvn clean sonar:sonar"
+    }
+    stage('uploadToNexus'){
+        sh "${mhd}/bin/mvn deploy"
+    }
+    stage('deployToContainer'){
+        sshagent(['de366398-0a6f-4dba-a232-6a750446df3b']){
+            sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.110.102.150:/opt/apache-tomcat-9.0.64/webapps"
+        }
+    }
+}
